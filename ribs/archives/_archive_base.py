@@ -427,8 +427,10 @@ class ArchiveBase(ABC):
             },
         )
 
+        cells = self.index_of(data["measures"])
+
         add_info = self._store.add(
-            self.index_of(data["measures"]),
+            cells,
             data,
             {
                 "dtype": self._dtype,
@@ -448,7 +450,7 @@ class ArchiveBase(ABC):
         if not np.all(add_info["status"] == 0):
             self._stats_update(objective_sum, best_index)
 
-        return add_info
+        return add_info, cells
 
     def add_single(self, solution, objective, measures, **fields):
         """Inserts a single solution into the archive.
@@ -494,8 +496,10 @@ class ArchiveBase(ABC):
         for name, arr in data.items():
             data[name] = np.expand_dims(arr, axis=0)
 
+        cell = np.expand_dims(self.index_of_single(measures), axis=0)
+
         add_info = self._store.add(
-            np.expand_dims(self.index_of_single(measures), axis=0),
+            cell,
             data,
             {
                 "dtype": self._dtype,
@@ -519,7 +523,7 @@ class ArchiveBase(ABC):
         if add_info["status"]:
             self._stats_update(objective_sum, best_index)
 
-        return add_info
+        return add_info, cell
 
     def retrieve(self, measures):
         """Retrieves the elites with measures in the same cells as the measures

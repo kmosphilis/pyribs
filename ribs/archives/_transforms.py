@@ -169,6 +169,8 @@ def batch_entries_with_threshold(indices, new_data, add_info, extra_args,
     cur_threshold[is_new] = (dtype(0)
                              if threshold_min == -np.inf else threshold_min)
     add_info["value"] = new_data["objective"] - cur_threshold
+    add_info["usable_indices"] = np.array([], dtype=np.int32)
+    add_info["inserted_indices"] = np.array([], dtype=np.int32)
 
     # Return early if we cannot insert anything -- continuing would actually
     # throw a ValueError in aggregate() since index[can_insert] would be empty.
@@ -181,6 +183,7 @@ def batch_entries_with_threshold(indices, new_data, add_info, extra_args,
     indices = indices[can_insert]
     new_data = {name: arr[can_insert] for name, arr in new_data.items()}
     cur_threshold = cur_threshold[can_insert]
+    add_info["usable_indices"] = can_insert
 
     # Compute the new threshold associated with each entry.
     if threshold_min == -np.inf:
@@ -217,8 +220,11 @@ def batch_entries_with_threshold(indices, new_data, add_info, extra_args,
 
     # Select only solutions that will be inserted into the archive.
     indices = indices[should_insert]
+
     new_data = {name: arr[should_insert] for name, arr in new_data.items()}
     new_data["threshold"] = new_threshold[should_insert]
+
+    add_info["inserted_indices"] = should_insert
 
     return indices, new_data, add_info
 

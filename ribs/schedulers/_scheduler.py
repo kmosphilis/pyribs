@@ -244,8 +244,9 @@ class Scheduler:
             result_archive_empty_before = self.result_archive.empty
 
         # Add solutions to the archive.
+        cells = np.array([], dtype=np.int32)
         if self._add_mode == "batch":
-            add_info = self.archive.add(**data)
+            add_info, cells = self.archive.add(**data)
 
             # Add solutions to result_archive.
             if self._result_archive is not None:
@@ -255,7 +256,7 @@ class Scheduler:
 
             for i in range(len(self._cur_solutions)):
                 single_data = {name: arr[i] for name, arr in data.items()}
-                single_info = self.archive.add_single(**single_data)
+                single_info, cells = self.archive.add_single(**single_data)
                 for name, val in single_info.items():
                     add_info[name].append(val)
 
@@ -273,7 +274,7 @@ class Scheduler:
             if result_archive_empty_before and self.result_archive.empty:
                 warnings.warn(self.EMPTY_WARNING.format(name="result_archive"))
 
-        return add_info
+        return add_info, cells
 
     def tell_dqd(self, objective, measures, jacobian, **fields):
         """Returns info for solutions from :meth:`ask_dqd`.
@@ -315,7 +316,7 @@ class Scheduler:
         jacobian = np.asarray(jacobian)
         self._check_length("jacobian", jacobian)
 
-        add_info = self._add_to_archives(data)
+        add_info, _ = self._add_to_archives(data)
 
         # Keep track of pos because emitters may have different batch sizes.
         pos = 0
@@ -363,7 +364,7 @@ class Scheduler:
             **fields,
         })
 
-        add_info = self._add_to_archives(data)
+        add_info, cells = self._add_to_archives(data)
 
         # Keep track of pos because emitters may have different batch sizes.
         pos = 0
@@ -378,3 +379,5 @@ class Scheduler:
                 },
             )
             pos = end
+
+        return add_info, cells
