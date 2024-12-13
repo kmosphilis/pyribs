@@ -169,7 +169,7 @@ def batch_entries_with_threshold(indices, new_data, add_info, extra_args,
     cur_threshold[is_new] = (dtype(0)
                              if threshold_min == -np.inf else threshold_min)
     add_info["value"] = new_data["objective"] - cur_threshold
-    add_info["usable_indices"] = np.array([], dtype=np.int32)
+    add_info["usable_indices"] = can_insert
     add_info["inserted_indices"] = np.array([], dtype=np.int32)
 
     # Return early if we cannot insert anything -- continuing would actually
@@ -183,7 +183,6 @@ def batch_entries_with_threshold(indices, new_data, add_info, extra_args,
     indices = indices[can_insert]
     new_data = {name: arr[can_insert] for name, arr in new_data.items()}
     cur_threshold = cur_threshold[can_insert]
-    add_info["usable_indices"] = can_insert
 
     # Compute the new threshold associated with each entry.
     if threshold_min == -np.inf:
