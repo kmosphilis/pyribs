@@ -1,4 +1,5 @@
 """Provides the Scheduler."""
+
 import warnings
 from collections import defaultdict
 
@@ -100,8 +101,8 @@ class Scheduler:
                              "defaults to be the same as `archive` if you pass "
                              "`result_archive=None`")
 
-        if (result_archive is not None and
-                set(archive.field_list) != set(result_archive.field_list)):
+        if result_archive is not None and set(archive.field_list) != set(
+                result_archive.field_list):
             raise ValueError("`archive` and `result_archive` should have the "
                              "same set of fields. This may be the result of "
                              "passing extra_fields to archive but not to "
@@ -170,9 +171,9 @@ class Scheduler:
             self._num_emitted[i] = len(emitter_sols)
 
         # In case the emitters didn't return any solutions.
-        self._cur_solutions = np.concatenate(
-            self._cur_solutions, axis=0) if self._cur_solutions else np.empty(
-                (0, self._solution_dim))
+        self._cur_solutions = (np.concatenate(self._cur_solutions, axis=0)
+                               if self._cur_solutions else np.empty(
+                                   (0, self._solution_dim)))
         return self._cur_solutions
 
     def ask(self):
@@ -194,17 +195,21 @@ class Scheduler:
         self._last_called = "ask"
 
         self._cur_solutions = []
+        cur_parents = []
 
         for i, emitter in enumerate(self._emitters):
-            emitter_sols = emitter.ask()
+            emitter_sols, parents = emitter.ask()
             self._cur_solutions.append(emitter_sols)
+            cur_parents.append(parents)
+
             self._num_emitted[i] = len(emitter_sols)
 
         # In case the emitters didn't return any solutions.
-        self._cur_solutions = np.concatenate(
-            self._cur_solutions, axis=0) if self._cur_solutions else np.empty(
-                (0, self._solution_dim))
-        return self._cur_solutions
+        self._cur_solutions = (np.concatenate(self._cur_solutions, axis=0)
+                               if self._cur_solutions else np.empty(
+                                   (0, self._solution_dim)))
+        cur_parents = np.concatenate(cur_parents)
+        return self._cur_solutions, cur_parents
 
     def _check_length(self, name, arr):
         """Raises a ValueError if array does not have the same length as the

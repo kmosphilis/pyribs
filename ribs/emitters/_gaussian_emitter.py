@@ -1,4 +1,5 @@
 """Provides the GaussianEmitter."""
+
 import numpy as np
 
 from ribs._utils import check_batch_shape, check_shape
@@ -74,8 +75,12 @@ class GaussianEmitter(EmitterBase):
         elif initial_solutions is not None:
             self._initial_solutions = np.asarray(initial_solutions,
                                                  dtype=archive.dtype)
-            check_batch_shape(self._initial_solutions, "initial_solutions",
-                              archive.solution_dim, "archive.solution_dim")
+            check_batch_shape(
+                self._initial_solutions,
+                "initial_solutions",
+                archive.solution_dim,
+                "archive.solution_dim",
+            )
 
         EmitterBase.__init__(
             self,
@@ -83,10 +88,12 @@ class GaussianEmitter(EmitterBase):
             solution_dim=archive.solution_dim,
             bounds=bounds,
         )
-        self._operator = GaussianOperator(sigma=self._sigma,
-                                          lower_bounds=self._lower_bounds,
-                                          upper_bounds=self._upper_bounds,
-                                          seed=seed)
+        self._operator = GaussianOperator(
+            sigma=self._sigma,
+            lower_bounds=self._lower_bounds,
+            upper_bounds=self._upper_bounds,
+            seed=seed,
+        )
 
     @property
     def x0(self):
@@ -131,9 +138,9 @@ class GaussianEmitter(EmitterBase):
         if self.archive.empty:
             if self._initial_solutions is not None:
                 return np.clip(self._initial_solutions, self.lower_bounds,
-                               self.upper_bounds)
+                               self.upper_bounds), np.array([], dtype=np.int32)
             parents = np.repeat(self.x0[None], repeats=self._batch_size, axis=0)
         else:
             parents = self.archive.sample_elites(self._batch_size)["solution"]
 
-        return self._operator.ask(parents=parents)
+        return self._operator.ask(parents=parents), parents

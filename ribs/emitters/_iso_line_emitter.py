@@ -1,4 +1,5 @@
 """Provides the IsoLineEmitter."""
+
 import numpy as np
 
 from ribs._utils import check_batch_shape, check_shape
@@ -85,8 +86,12 @@ class IsoLineEmitter(EmitterBase):
         elif initial_solutions is not None:
             self._initial_solutions = np.asarray(initial_solutions,
                                                  dtype=archive.dtype)
-            check_batch_shape(self._initial_solutions, "initial_solutions",
-                              archive.solution_dim, "archive.solution_dim")
+            check_batch_shape(
+                self._initial_solutions,
+                "initial_solutions",
+                archive.solution_dim,
+                "archive.solution_dim",
+            )
 
         EmitterBase.__init__(
             self,
@@ -95,11 +100,13 @@ class IsoLineEmitter(EmitterBase):
             bounds=bounds,
         )
 
-        self._operator = IsoLineOperator(line_sigma=self._line_sigma,
-                                         iso_sigma=self._iso_sigma,
-                                         lower_bounds=self._lower_bounds,
-                                         upper_bounds=self._upper_bounds,
-                                         seed=seed)
+        self._operator = IsoLineOperator(
+            line_sigma=self._line_sigma,
+            iso_sigma=self._iso_sigma,
+            lower_bounds=self._lower_bounds,
+            upper_bounds=self._upper_bounds,
+            seed=seed,
+        )
 
     @property
     def x0(self):
@@ -149,7 +156,7 @@ class IsoLineEmitter(EmitterBase):
         """
         if self.archive.empty and self._initial_solutions is not None:
             return np.clip(self._initial_solutions, self.lower_bounds,
-                           self.upper_bounds)
+                           self.upper_bounds), np.array([], dtype=np.int32)
 
         if self.archive.empty:
             parents = np.repeat(self.x0[None],
@@ -158,5 +165,6 @@ class IsoLineEmitter(EmitterBase):
         else:
             parents = self.archive.sample_elites(2 *
                                                  self._batch_size)["solution"]
-        return self._operator.ask(
-            parents=parents.reshape(2, self._batch_size, -1))
+
+        parents = parents.reshape(2, self._batch_size, -1)
+        return self._operator.ask(parents=parents), parents
