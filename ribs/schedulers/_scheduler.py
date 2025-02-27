@@ -195,12 +195,14 @@ class Scheduler:
         self._last_called = "ask"
 
         self._cur_solutions = []
-        cur_parents = []
+        cur_parents = defaultdict(list)
 
         for i, emitter in enumerate(self._emitters):
             emitter_sols, parents = emitter.ask()
             self._cur_solutions.append(emitter_sols)
-            cur_parents.append(parents)
+
+            for key, value in parents.items():
+                cur_parents[key].append(value.tolist())
 
             self._num_emitted[i] = len(emitter_sols)
 
@@ -208,7 +210,10 @@ class Scheduler:
         self._cur_solutions = (np.concatenate(self._cur_solutions, axis=0)
                                if self._cur_solutions else np.empty(
                                    (0, self._solution_dim)))
-        cur_parents = np.concatenate(cur_parents)
+
+        for key, value in cur_parents.items():
+            cur_parents[key] = np.array(value)
+
         return self._cur_solutions, cur_parents
 
     def _check_length(self, name, arr):

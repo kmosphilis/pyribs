@@ -137,10 +137,16 @@ class GaussianEmitter(EmitterBase):
         """
         if self.archive.empty:
             if self._initial_solutions is not None:
-                return np.clip(self._initial_solutions, self.lower_bounds,
-                               self.upper_bounds), np.array([], dtype=np.int32)
-            parents = np.repeat(self.x0[None], repeats=self._batch_size, axis=0)
-        else:
-            parents = self.archive.sample_elites(self._batch_size)["solution"]
+                return (
+                    np.clip(self._initial_solutions, self.lower_bounds,
+                            self.upper_bounds),
+                    {},
+                )
 
-        return self._operator.ask(parents=parents), parents
+            parents = np.repeat(self.x0[None], repeats=self._batch_size, axis=0)
+            parents_data = {}
+        else:
+            parents_data = self.archive.sample_elites(self._batch_size)
+            parents = parents_data["solution"]
+
+        return self._operator.ask(parents=parents), parents_data

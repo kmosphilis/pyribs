@@ -155,16 +155,23 @@ class IsoLineEmitter(EmitterBase):
             might not have ``batch_size`` solutions.
         """
         if self.archive.empty and self._initial_solutions is not None:
-            return np.clip(self._initial_solutions, self.lower_bounds,
-                           self.upper_bounds), np.array([], dtype=np.int32)
+            return (
+                np.clip(self._initial_solutions, self.lower_bounds,
+                        self.upper_bounds),
+                {},
+            )
 
         if self.archive.empty:
             parents = np.repeat(self.x0[None],
                                 repeats=2 * self._batch_size,
                                 axis=0)
-        else:
-            parents = self.archive.sample_elites(2 *
-                                                 self._batch_size)["solution"]
 
-        parents = parents.reshape(2, self._batch_size, -1)
-        return self._operator.ask(parents=parents), parents
+            parents_data = {}
+        else:
+            parents_data = self.archive.sample_elites(2 * self._batch_size)
+            for key, item in parents_data.items():
+                parents_data[key] = item.reshape(2, self._batch_size, -1)
+
+            parents = parents_data["solution"]
+
+        return self._operator.ask(parents=parents), parents_data
